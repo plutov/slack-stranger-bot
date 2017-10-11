@@ -91,13 +91,14 @@ func startConversation(ev *slack.MessageEvent) {
 		postMsg(ev.Msg.User, foundMsg, params)
 		// Notify Stranger
 		postMsg(stranger, strangerMsg, params)
+
+		log.Println("Conversation started")
 	} else {
 		// Notify current user that we cannot find a Stranger
 		postMsg(ev.Msg.User, notFoundMsg, params)
-	}
 
-	// Do not log any data, just event
-	log.Println("Conversation started")
+		log.Println("Cannot find stranger")
+	}
 }
 
 // user -> bot -> user. Secure
@@ -148,14 +149,19 @@ func endConversation(ev *slack.MessageEvent) {
 }
 
 func findRandomUser(initiator string) string {
-	var attemptsLeft = 20
+	var attemptsLeft = 25
 
 	for attemptsLeft > 0 {
 		randomID, randomUser := getRandomUser(users)
 		if randomUser != nil && randomID != initiator && randomUser.stranger == nil {
-			randomUser.stranger = &initiator
-			users[initiator].stranger = &randomID
-			return randomID
+			presense, err := api.GetUserPresence(randomID)
+			if err != nil {
+				log.Println("[findRandomUser]: " + err.Error())
+			} else if presense != nil && presense.Presence == "active" {
+				randomUser.stranger = &initiator
+				users[initiator].stranger = &randomID
+				return randomID
+			}
 		}
 		attemptsLeft--
 	}
