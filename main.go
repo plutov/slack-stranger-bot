@@ -29,6 +29,7 @@ const (
 	strangerMsg    = "One random Stranger just connected to you. Wanna talk? Type something here and I will forward it to Stranger anonymously. _Or type *bye* to finish the conversation_"
 	byeMsg         = "Bye! You finished conversation with the Stranger. _Type *hi* again if you want to start a new random one._"
 	byeStrangerMsg = "Bye! Stranger finished conversation with you. _Type *hi* again if you want to start a new random one._"
+	notFoundMsg    = "Sorry, cannot find available online Stranger right now :disappointed:"
 )
 
 func main() {
@@ -90,6 +91,9 @@ func startConversation(ev *slack.MessageEvent) {
 		postMsg(ev.Msg.User, foundMsg, params)
 		// Notify Stranger
 		postMsg(stranger, strangerMsg, params)
+	} else {
+		// Notify current user that we cannot find a Stranger
+		postMsg(ev.Msg.User, notFoundMsg, params)
 	}
 
 	// Do not log any data, just event
