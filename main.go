@@ -7,11 +7,12 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strings"
 	"sync"
 )
 
 type user struct {
-	inConversationWith *string
+	stranger *string
 }
 
 var (
@@ -46,11 +47,12 @@ func main() {
 			mu.Lock()
 			user, found := users[ev.Msg.User]
 			mu.Unlock()
-			if ev.Msg.Text == startCommand && found && user.inConversationWith == nil {
+			possibleCommand := strings.TrimSpace(strings.ToLower(ev.Msg.Text))
+			if possibleCommand == startCommand && found && user.stranger == nil {
 				go startConversation(ev)
-			} else if ev.Msg.Text == endCommand && found && user.inConversationWith != nil {
+			} else if possibleCommand == endCommand && found && user.stranger != nil {
 				go endConversation(ev)
-			} else if found && user.inConversationWith != nil {
+			} else if found && user.stranger != nil {
 				go forwardMessage(ev)
 			}
 
@@ -105,7 +107,7 @@ func forwardMessage(ev *slack.MessageEvent) {
 	mu.Unlock()
 
 	if found {
-		postMsg(*sender.inConversationWith, ev.Msg.Text, params)
+		postMsg(*sender.stranger, ev.Msg.Text, params)
 	}
 
 	// Do not log any data, just event
@@ -125,16 +127,16 @@ func endConversation(ev *slack.MessageEvent) {
 		postMsg(ev.Msg.User, byeMsg, params)
 
 		mu.Lock()
-		strangerID := *users[ev.Msg.User].inConversationWith
+		strangerID := *users[ev.Msg.User].stranger
 		stranger, ok := users[strangerID]
 		mu.Unlock()
 
 		if ok {
 			// Notify Stranger that conversation is finished
 			postMsg(strangerID, byeStrangerMsg, params)
-			stranger.inConversationWith = nil
+			stranger.stranger = nil
 		}
-		initiator.inConversationWith = nil
+		initiator.stranger = nil
 	}
 
 	// Do not log any data, just event
@@ -146,9 +148,9 @@ func findRandomUser(initiator string) string {
 
 	for attemptsLeft > 0 {
 		randomID, randomUser := getRandomUser(users)
-		if randomUser != nil && randomID != initiator && randomUser.inConversationWith == nil {
-			randomUser.inConversationWith = &initiator
-			users[initiator].inConversationWith = &randomID
+		if randomUser != nil && randomID != initiator && randomUser.stranger == nil {
+			randomUser.stranger = &initiator
+			users[initiator].stranger = &randomID
 			return randomID
 		}
 		attemptsLeft--
