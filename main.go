@@ -21,12 +21,13 @@ var (
 )
 
 const (
-	startCommand = "hi"
-	endCommand   = "bye"
-	connMsg      = "Connecting to a random Stranger ..."
-	foundMsg     = "Stranger found! Say hello, and please be polite :wave: _Type *bye* to finish the conversation_"
-	strangerMsg  = "One random Stranger just connected to you. Wanna talk? _Or type *bye* to finish the conversation_"
-	byeMsg       = "Bye! You finished conversation with the Stranger. _Type *hi* again if you want to start a new random one._"
+	startCommand   = "hi"
+	endCommand     = "bye"
+	connMsg        = "Connecting to a random Stranger ..."
+	foundMsg       = "Stranger found! Say hello, and please be polite :wave: _Type *bye* to finish the conversation_"
+	strangerMsg    = "One random Stranger just connected to you. Wanna talk? Type something here and I will forward it to Stranger anonymously. _Or type *bye* to finish the conversation_"
+	byeMsg         = "Bye! You finished conversation with the Stranger. _Type *hi* again if you want to start a new random one._"
+	byeStrangerMsg = "Bye! Stranger finished conversation with you. _Type *hi* again if you want to start a new random one._"
 )
 
 func main() {
@@ -130,7 +131,7 @@ func endConversation(ev *slack.MessageEvent) {
 
 		if ok {
 			// Notify Stranger that conversation is finished
-			postMsg(strangerID, byeMsg, params)
+			postMsg(strangerID, byeStrangerMsg, params)
 			stranger.inConversationWith = nil
 		}
 		initiator.inConversationWith = nil
