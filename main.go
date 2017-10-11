@@ -37,8 +37,14 @@ func main() {
 
 	api = slack.New(os.Getenv("SLACK_TOKEN"))
 
-	getUsers()
+	log.Println("[main] Fetching all users...")
+	users = getUsers(false)
+	log.Println("[main] Ready")
 
+	startRTM()
+}
+
+func startRTM() {
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
 
@@ -62,8 +68,8 @@ func main() {
 }
 
 // Get all users from Slack once
-func getUsers() {
-	users = make(map[string]*user)
+func getUsers(onlyActive bool) map[string]*user {
+	users := make(map[string]*user)
 
 	slackUsers, err := api.GetUsers()
 	if err != nil {
@@ -71,10 +77,12 @@ func getUsers() {
 	}
 
 	for _, u := range slackUsers {
-		if !u.IsBot {
+		if !u.IsBot && (!onlyActive || u.Presence == "active") {
 			users[u.ID] = &user{}
 		}
 	}
+
+	return users
 }
 
 func startConversation(ev *slack.MessageEvent) {
@@ -92,12 +100,12 @@ func startConversation(ev *slack.MessageEvent) {
 		// Notify Stranger
 		postMsg(stranger, strangerMsg, params)
 
-		log.Println("Conversation started")
+		log.Println("[startConversation] ok")
 	} else {
 		// Notify current user that we cannot find a Stranger
 		postMsg(ev.Msg.User, notFoundMsg, params)
 
-		log.Println("Cannot find stranger")
+		log.Println("[startConversation] not found")
 	}
 }
 
@@ -115,8 +123,7 @@ func forwardMessage(ev *slack.MessageEvent) {
 		postMsg(*sender.stranger, ev.Msg.Text, params)
 	}
 
-	// Do not log any data, just event
-	log.Println("Message forwarded")
+	log.Println("[forwardMessage] ok")
 }
 
 func endConversation(ev *slack.MessageEvent) {
@@ -140,28 +147,28 @@ func endConversation(ev *slack.MessageEvent) {
 			// Notify Stranger that conversation is finished
 			postMsg(strangerID, byeStrangerMsg, params)
 			stranger.stranger = nil
+		} else {
+			log.Println("[endConversation] cannot find stranger in the list of users")
 		}
 		initiator.stranger = nil
 	}
 
-	// Do not log any data, just event
-	log.Println("Conversation ended")
+	log.Println("[endConversation] ok")
 }
 
 func findRandomUser(initiator string) string {
 	var attemptsLeft = 25
 
-	for attemptsLeft > 0 {
-		randomID, randomUser := getRandomUser(users)
+	_, initiatorFound := users[initiator]
+	// To find only active users to speak with
+	activeUsers := getUsers(true)
+
+	for initiatorFound && attemptsLeft > 0 {
+		randomID, randomUser := getRandomUser(activeUsers)
 		if randomUser != nil && randomID != initiator && randomUser.stranger == nil {
-			presense, err := api.GetUserPresence(randomID)
-			if err != nil {
-				log.Println("[findRandomUser]: " + err.Error())
-			} else if presense != nil && presense.Presence == "active" {
-				randomUser.stranger = &initiator
-				users[initiator].stranger = &randomID
-				return randomID
-			}
+			randomUser.stranger = &initiator
+			users[initiator].stranger = &randomID
+			return randomID
 		}
 		attemptsLeft--
 	}
