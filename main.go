@@ -96,8 +96,8 @@ func startConversation(ev *slack.MessageEvent) {
 
 	mu.Lock()
 	stranger := findRandomUser(ev.Msg.User)
-	log.Println(stranger)
 	mu.Unlock()
+
 	if len(stranger) > 0 {
 		// Notify current user that we found Stranger
 		postMsg(ev.Msg.User, foundMsg, params)
@@ -194,8 +194,8 @@ func getRandomUser(m map[string]*user) (string, *user) {
 }
 
 func postMsg(channel, text string, params slack.PostMessageParameters) {
-	/*_, _, msgErr := api.PostMessage(channel, text, params)
+	_, _, msgErr := api.PostMessage(channel, text, params)
 	if msgErr != nil {
 		log.Println("[postMessage] " + msgErr.Error())
-	}*/
+	}
 }
