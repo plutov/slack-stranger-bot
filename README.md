@@ -7,8 +7,8 @@ Meet strangers in your company, explore new people. Fully anonymous and secure, 
  - User opens conversation with Stranger Bot.
  - Types `hi`.
  - Stranger Bot finds random active user who doesn't participate currently in Stranger conversation.
- - All following messages sent by user to Bot will be forwarded by Bot to Stranger user.
- - Any user can type `bye` to finish conversation, and type `hi` again to start a new random one.
+ - Bot will forward all next messages sent by user to Bot to the Stranger user. Without mentioning who sent this message.
+ - Any user can type `bye` to finish the conversation, and type `hi` again to start a new random one.
 
 ### Start Bot
 
