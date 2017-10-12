@@ -104,7 +104,7 @@ func startConversation(ev *slack.MessageEvent) {
 		// Notify Stranger
 		postMsg(stranger, strangerMsg, params)
 
-		log.Println("[startConversation] ok")
+		log.Println("[startConversation] ok: " + ev.Msg.User + " -> " + stranger)
 	} else {
 		// Notify current user that we cannot find a Stranger
 		postMsg(ev.Msg.User, notFoundMsg, params)
@@ -127,7 +127,7 @@ func forwardMessage(ev *slack.MessageEvent) {
 		postMsg(*sender.stranger, ev.Msg.Text, params)
 	}
 
-	log.Println("[forwardMessage] ok")
+	log.Println("[forwardMessage] ok: " + ev.Msg.User + " -> " + *sender.stranger)
 }
 
 func endConversation(ev *slack.MessageEvent) {
@@ -151,13 +151,12 @@ func endConversation(ev *slack.MessageEvent) {
 			// Notify Stranger that conversation is finished
 			postMsg(strangerID, byeStrangerMsg, params)
 			stranger.stranger = nil
+			log.Println("[endConversation] ok: " + ev.Msg.User + " & " + strangerID)
 		} else {
 			log.Println("[endConversation] cannot find stranger in the list of users")
 		}
 		initiator.stranger = nil
 	}
-
-	log.Println("[endConversation] ok")
 }
 
 func findRandomUser(initiator string) string {
