@@ -13,6 +13,7 @@ import (
 )
 
 type user struct {
+	id       string
 	stranger *string
 }
 
@@ -39,8 +40,12 @@ func main() {
 	api = slack.New(os.Getenv("SLACK_TOKEN"))
 
 	log.Println("[main] Fetching all users...")
-	users = getUsers(false, "")
-	log.Println("[main] Ready")
+	allUsers := getUsers(false, "")
+	users = make(map[string]*user)
+	for _, u := range allUsers {
+		users[u.id] = u
+	}
+	log.Println("[main] Ready.")
 
 	startRTM()
 }
@@ -69,8 +74,8 @@ func startRTM() {
 }
 
 // Get all users from Slack once
-func getUsers(onlyAvailable bool, exclude string) map[string]*user {
-	usersLocal := make(map[string]*user)
+func getUsers(onlyAvailable bool, exclude string) []*user {
+	usersLocal := []*user{}
 
 	slackUsers, err := api.GetUsers()
 	if err != nil {
@@ -81,7 +86,9 @@ func getUsers(onlyAvailable bool, exclude string) map[string]*user {
 		cachedUser, ok := users[u.ID]
 		isAvailable := ok && u.Presence == "active" && cachedUser.stranger == nil
 		if !u.IsBot && (!onlyAvailable || isAvailable) && u.ID != exclude {
-			usersLocal[u.ID] = &user{}
+			usersLocal = append(usersLocal, &user{
+				id: u.ID,
+			})
 		}
 	}
 
@@ -167,12 +174,12 @@ func findRandomUser(initiator string) string {
 	for initiatorFound && attemptsLeft > 0 {
 		// To find only available users to speak with
 		availableUsers := getUsers(true, initiator)
-		randomID, randomUser := getRandomUser(availableUsers)
+		randomUser := getRandomUser(availableUsers)
 
 		if randomUser != nil {
 			randomUser.stranger = &initiator
-			users[initiator].stranger = &randomID
-			return randomID
+			users[initiator].stranger = &randomUser.id
+			return randomUser.id
 		}
 		attemptsLeft--
 	}
@@ -180,16 +187,8 @@ func findRandomUser(initiator string) string {
 	return ""
 }
 
-func getRandomUser(m map[string]*user) (string, *user) {
-	i := rand.Intn(len(m))
-	for id, u := range m {
-		if i == 0 {
-			return id, u
-		}
-		i--
-	}
-
-	return "", nil
+func getRandomUser(list []*user) *user {
+	return list[rand.Intn(len(list))]
 }
 
 func postMsg(channel, text string, params slack.PostMessageParameters) {
