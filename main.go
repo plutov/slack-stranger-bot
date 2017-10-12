@@ -3,12 +3,13 @@
 package main
 
 import (
-	"github.com/nlopes/slack"
 	"log"
 	"math/rand"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/nlopes/slack"
 )
 
 type user struct {
@@ -38,7 +39,7 @@ func main() {
 	api = slack.New(os.Getenv("SLACK_TOKEN"))
 
 	log.Println("[main] Fetching all users...")
-	users = getUsers(false)
+	users = getUsers(false, "")
 	log.Println("[main] Ready")
 
 	startRTM()
@@ -68,8 +69,8 @@ func startRTM() {
 }
 
 // Get all users from Slack once
-func getUsers(onlyActive bool) map[string]*user {
-	users := make(map[string]*user)
+func getUsers(onlyAvailable bool, exclude string) map[string]*user {
+	usersLocal := make(map[string]*user)
 
 	slackUsers, err := api.GetUsers()
 	if err != nil {
@@ -77,12 +78,14 @@ func getUsers(onlyActive bool) map[string]*user {
 	}
 
 	for _, u := range slackUsers {
-		if !u.IsBot && (!onlyActive || u.Presence == "active") {
-			users[u.ID] = &user{}
+		cachedUser, ok := users[u.ID]
+		isAvailable := ok && u.Presence == "active" && cachedUser.stranger == nil
+		if !u.IsBot && (!onlyAvailable || isAvailable) && u.ID != exclude {
+			usersLocal[u.ID] = &user{}
 		}
 	}
 
-	return users
+	return usersLocal
 }
 
 func startConversation(ev *slack.MessageEvent) {
@@ -93,6 +96,7 @@ func startConversation(ev *slack.MessageEvent) {
 
 	mu.Lock()
 	stranger := findRandomUser(ev.Msg.User)
+	log.Println(stranger)
 	mu.Unlock()
 	if len(stranger) > 0 {
 		// Notify current user that we found Stranger
@@ -157,15 +161,16 @@ func endConversation(ev *slack.MessageEvent) {
 }
 
 func findRandomUser(initiator string) string {
-	var attemptsLeft = 25
+	var attemptsLeft = 5
 
 	_, initiatorFound := users[initiator]
-	// To find only active users to speak with
-	activeUsers := getUsers(true)
 
 	for initiatorFound && attemptsLeft > 0 {
-		randomID, randomUser := getRandomUser(activeUsers)
-		if randomUser != nil && randomID != initiator && randomUser.stranger == nil {
+		// To find only available users to speak with
+		availableUsers := getUsers(true, initiator)
+		randomID, randomUser := getRandomUser(availableUsers)
+
+		if randomUser != nil {
 			randomUser.stranger = &initiator
 			users[initiator].stranger = &randomID
 			return randomID
@@ -189,8 +194,8 @@ func getRandomUser(m map[string]*user) (string, *user) {
 }
 
 func postMsg(channel, text string, params slack.PostMessageParameters) {
-	_, _, msgErr := api.PostMessage(channel, text, params)
+	/*_, _, msgErr := api.PostMessage(channel, text, params)
 	if msgErr != nil {
 		log.Println("[postMessage] " + msgErr.Error())
-	}
+	}*/
 }
