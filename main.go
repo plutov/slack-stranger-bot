@@ -12,11 +12,6 @@ import (
 	"github.com/nlopes/slack"
 )
 
-type user struct {
-	id       string
-	stranger *string
-}
-
 var (
 	// initiator => stranger map
 	conversations map[string]string
@@ -71,8 +66,8 @@ func startRTM() {
 }
 
 // Get all available users from Slack once
-func getAvailableUsers(exclude string) []*user {
-	users := []*user{}
+func getAvailableUsers(exclude string) []string {
+	users := []string{}
 
 	slackUsers, err := api.GetUsers()
 	if err != nil {
@@ -81,9 +76,7 @@ func getAvailableUsers(exclude string) []*user {
 
 	for _, u := range slackUsers {
 		if !u.IsBot && u.Presence == "active" && u.ID != exclude {
-			users = append(users, &user{
-				id: u.ID,
-			})
+			users = append(users, u.ID)
 		}
 	}
 
@@ -162,22 +155,13 @@ func endConversation(ev *slack.MessageEvent) {
 }
 
 func findRandomUser(initiator string) string {
-	var attemptsLeft = 5
+	availableUsers := getAvailableUsers(initiator)
+	randomUser := getRandomUser(availableUsers)
 
-	for attemptsLeft > 0 {
-		availableUsers := getAvailableUsers(initiator)
-		randomUser := getRandomUser(availableUsers)
-
-		if randomUser != nil {
-			return randomUser.id
-		}
-		attemptsLeft--
-	}
-
-	return ""
+	return randomUser
 }
 
-func getRandomUser(list []*user) *user {
+func getRandomUser(list []string) string {
 	return list[rand.Intn(len(list))]
 }
 
