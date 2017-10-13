@@ -80,7 +80,7 @@ func getAvailableUsers(exclude string) []*user {
 	}
 
 	for _, u := range slackUsers {
-		if !u.IsBot && u.ID != exclude {
+		if !u.IsBot && u.Presence == "active" && u.ID != exclude {
 			users = append(users, &user{
 				id: u.ID,
 			})
