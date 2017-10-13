@@ -18,7 +18,6 @@ type user struct {
 }
 
 var (
-	users map[string]*user
 	// initiator => stranger map
 	conversations map[string]string
 	api           *slack.Client
