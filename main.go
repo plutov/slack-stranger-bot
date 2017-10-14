@@ -3,13 +3,13 @@
 package main
 
 import (
-	"log"
 	"math/rand"
 	"os"
 	"strings"
 	"sync"
 
 	"github.com/nlopes/slack"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -36,7 +36,8 @@ func main() {
 
 	api = slack.New(os.Getenv("SLACK_TOKEN"))
 
-	log.Println("[main] Stranger Bot started.")
+	log.SetOutput(os.Stdout)
+	log.Info("[main] Stranger Bot started.")
 
 	startRTM()
 }
@@ -102,12 +103,12 @@ func startConversation(ev *slack.MessageEvent) {
 		// Notify Stranger
 		postMsg(stranger, strangerMsg, params)
 
-		log.Println("[startConversation] ok: " + ev.Msg.User + " -> " + stranger)
+		log.Info("[startConversation] ok")
 	} else {
 		// Notify current user that we cannot find a Stranger
 		postMsg(ev.Msg.User, notFoundMsg, params)
 
-		log.Println("[startConversation] not found")
+		log.Info("[startConversation] stranger not found")
 	}
 }
 
@@ -123,9 +124,9 @@ func forwardMessage(ev *slack.MessageEvent) {
 
 	if found {
 		postMsg(stranger, ev.Msg.Text, params)
-		log.Println("[forwardMessage] ok: " + ev.Msg.User + " -> " + stranger)
+		log.Info("[forwardMessage] ok")
 	} else {
-		log.Println("[forwardMessage] unable to find stranger for " + ev.Msg.User)
+		log.Info("[forwardMessage] unable to find stranger")
 	}
 }
 
@@ -143,14 +144,14 @@ func endConversation(ev *slack.MessageEvent) {
 		postMsg(ev.Msg.User, byeMsg, params)
 		postMsg(stranger, byeStrangerMsg, params)
 
-		log.Println("[endConversation] ok: " + ev.Msg.User + " & " + stranger)
+		log.Info("[endConversation] ok")
 
 		mu.Lock()
 		delete(conversations, ev.Msg.User)
 		delete(conversations, stranger)
 		mu.Unlock()
 	} else {
-		log.Println("[endConversation] unable to find stranger for " + ev.Msg.User)
+		log.Info("[endConversation] unable to find stranger")
 	}
 }
 
@@ -168,6 +169,6 @@ func getRandomUser(list []string) string {
 func postMsg(channel, text string, params slack.PostMessageParameters) {
 	_, _, msgErr := api.PostMessage(channel, text, params)
 	if msgErr != nil {
-		log.Println("[postMessage] " + msgErr.Error())
+		log.Info("[postMessage] " + msgErr.Error())
 	}
 }
