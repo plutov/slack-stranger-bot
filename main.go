@@ -1,10 +1,12 @@
 package main
 
 import (
-	"github.com/wizeline/slack-stranger-bot/bot"
 	"os"
+
+	"github.com/wizeline/slack-stranger-bot/bot"
 )
 
 func main() {
-	bot.Start(os.Getenv("SLACK_TOKEN"))
+	api := bot.NewAPISlack(os.Getenv("SLACK_TOKEN"))
+	bot.Start(api, os.Stdout)
 }

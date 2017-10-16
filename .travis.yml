@@ -3,5 +3,8 @@ language: go
 go:
   - 1.9
 
+install:
+  - go get -t ./...
+
 script:
-  - go test ./... -bench=.
+  - go test ./bot -bench=. -v

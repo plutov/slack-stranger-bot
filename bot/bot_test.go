@@ -3,16 +3,28 @@
 package bot
 
 import (
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"sync"
 	"testing"
 )
 
 func init() {
-	mu = &sync.Mutex{}
-	conversations = make(map[string]string)
-	log.SetOutput(ioutil.Discard)
+	a := NewAPIMock()
+	Start(a, ioutil.Discard)
+}
+
+func TestFindRandomUser(t *testing.T) {
+	_, randomErr := findRandomUser("")
+	if randomErr != nil {
+		t.Fatalf("Not expected error, got %v", randomErr)
+	}
+}
+
+func TestFindRandomUserWithExclude(t *testing.T) {
+	userID := "testuser"
+	_, randomErr := findRandomUser(userID)
+	if randomErr == nil {
+		t.Fatal("Expected error, got nil")
+	}
 }
 
 func TestGetRandomUser(t *testing.T) {

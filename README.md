@@ -26,5 +26,5 @@ glide install
 ```
 
 ```
-go test ./...
+go test ./bot -bench=. -v
 ```

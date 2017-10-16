@@ -3,8 +3,9 @@
 package bot
 
 import (
+	"fmt"
+	"io"
 	"math/rand"
-	"os"
 	"strings"
 	"sync"
 
@@ -15,7 +16,7 @@ import (
 var (
 	// initiator => stranger map
 	conversations map[string]string
-	api           *slack.Client
+	api           IAPI
 	mu            *sync.Mutex
 )
 
@@ -31,20 +32,24 @@ const (
 )
 
 // Start bot entry func
-func Start(slackToken string) {
+func Start(a IAPI, logOut io.Writer) {
 	mu = &sync.Mutex{}
 	conversations = make(map[string]string)
 
-	api = slack.New(slackToken)
+	api = a
 
-	log.SetOutput(os.Stdout)
+	log.SetOutput(logOut)
 	log.Info("[main] Stranger Bot started.")
 
 	startRTM()
 }
 
 func startRTM() {
-	rtm := api.NewRTM()
+	rtm := api.newRTM()
+	if rtm == nil {
+		return
+	}
+
 	go rtm.ManageConnection()
 
 	for msg := range rtm.IncomingEvents {
@@ -73,12 +78,12 @@ func startRTM() {
 }
 
 // Get all available users from Slack once
-func getAvailableUsers(exclude string) []string {
+func getAvailableUsers(exclude string) ([]string, error) {
 	users := []string{}
 
-	slackUsers, err := api.GetUsers()
+	slackUsers, err := api.getUsers()
 	if err != nil {
-		log.Fatal("[getUsers] " + err.Error())
+		return users, fmt.Errorf("[getAvailableUsers] %v", err.Error())
 	}
 
 	for _, u := range slackUsers {
@@ -88,29 +93,29 @@ func getAvailableUsers(exclude string) []string {
 		}
 	}
 
-	return users
+	return users, nil
 }
 
 func startConversation(ev *slack.MessageEvent) {
-	postMsg(ev.Msg.User, connMsg)
+	api.postMsg(ev.Msg.User, connMsg)
 
-	stranger := findRandomUser(ev.Msg.User)
+	stranger, findErr := findRandomUser(ev.Msg.User)
 
-	if len(stranger) > 0 {
+	if findErr == nil && len(stranger) > 0 {
 		mu.Lock()
 		conversations[ev.Msg.User] = stranger
 		conversations[stranger] = ev.Msg.User
 		mu.Unlock()
 
 		// Notify current user that we found Stranger
-		postMsg(ev.Msg.User, foundMsg)
+		api.postMsg(ev.Msg.User, foundMsg)
 		// Notify Stranger
-		postMsg(stranger, strangerMsg)
+		api.postMsg(stranger, strangerMsg)
 
 		log.Info("[startConversation] ok")
 	} else {
 		// Notify current user that we cannot find a Stranger
-		postMsg(ev.Msg.User, notFoundMsg)
+		api.postMsg(ev.Msg.User, notFoundMsg)
 
 		log.Info("[startConversation] stranger not found")
 	}
@@ -123,7 +128,7 @@ func forwardMessage(ev *slack.MessageEvent) {
 	mu.Unlock()
 
 	if found {
-		postMsg(stranger, ev.Msg.Text)
+		api.postMsg(stranger, ev.Msg.Text)
 		log.Info("[forwardMessage] ok")
 	} else {
 		log.Info("[forwardMessage] unable to find stranger")
@@ -137,8 +142,8 @@ func endConversation(ev *slack.MessageEvent) {
 
 	if found {
 		// Notify Initiator and Stranger that conversation is finished
-		postMsg(ev.Msg.User, byeMsg)
-		postMsg(stranger, byeStrangerMsg)
+		api.postMsg(ev.Msg.User, byeMsg)
+		api.postMsg(stranger, byeStrangerMsg)
 
 		log.Info("[endConversation] ok")
 
@@ -151,22 +156,20 @@ func endConversation(ev *slack.MessageEvent) {
 	}
 }
 
-func findRandomUser(initiator string) string {
-	availableUsers := getAvailableUsers(initiator)
+func findRandomUser(initiator string) (string, error) {
+	availableUsers, err := getAvailableUsers(initiator)
+	if err != nil {
+		return "", err
+	}
+	if len(availableUsers) == 0 {
+		return "", fmt.Errorf("[findRandomUser] no available users found")
+	}
+
 	randomUser := getRandomUser(availableUsers)
 
-	return randomUser
+	return randomUser, nil
 }
 
 func getRandomUser(list []string) string {
 	return list[rand.Intn(len(list))]
-}
-
-func postMsg(channel, text string) {
-	_, _, msgErr := api.PostMessage(channel, text, slack.PostMessageParameters{
-		AsUser: true,
-	})
-	if msgErr != nil {
-		log.Info("[postMessage] " + msgErr.Error())
-	}
 }
