@@ -18,6 +18,13 @@ Meet strangers in your company, explore new people. Fully anonymous and secure, 
 
 ### Run Unit Tests
 
+Install glide and dependencies:
+
+```
+curl --silent https://glide.sh/get | sh
+glide install
+```
+
 ```
 go test ./...
 ```

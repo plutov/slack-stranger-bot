@@ -1,0 +1,6 @@
+package: github.com/wizeline/slack-stranger-bot
+import:
+- package: github.com/nlopes/slack
+  version: v0.1.0
+- package: github.com/sirupsen/logrus
+  version: v1.0.3
