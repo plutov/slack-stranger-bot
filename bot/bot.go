@@ -50,6 +50,11 @@ func startRTM() {
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
+			// Do not handle bot messages
+			if len(ev.BotID) > 0 {
+				continue
+			}
+
 			mu.Lock()
 			_, found := conversations[ev.Msg.User]
 			mu.Unlock()
