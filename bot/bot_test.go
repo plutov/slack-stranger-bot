@@ -12,6 +12,13 @@ func init() {
 	Start(a, ioutil.Discard)
 }
 
+func TestGetAvailableUsers(t *testing.T) {
+	users, _ := getAvailableUsers("")
+	if len(users) != 1 {
+		t.Fatalf("Expected 1 user, got %v", users)
+	}
+}
+
 func TestFindRandomUser(t *testing.T) {
 	_, randomErr := findRandomUser("")
 	if randomErr != nil {
