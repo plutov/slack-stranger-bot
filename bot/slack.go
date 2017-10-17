@@ -64,6 +64,10 @@ func (a *APIMock) getUsers() ([]slack.User, error) {
 			Presence: "active",
 		},
 		slack.User{
+			ID:       "teststranger",
+			Presence: "active",
+		},
+		slack.User{
 			ID:       "inactive",
 			Presence: "inactive",
 		},

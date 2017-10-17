@@ -60,21 +60,93 @@ func startRTM() {
 				continue
 			}
 
-			mu.Lock()
-			_, found := conversations[ev.Msg.User]
-			mu.Unlock()
-
-			possibleCommand := strings.TrimSpace(strings.ToLower(ev.Msg.Text))
-			if possibleCommand == startCommand && !found {
-				go startConversation(ev)
-			} else if possibleCommand == endCommand && found {
-				go endConversation(ev)
-			} else if found {
-				go forwardMessage(ev)
-			}
-
+			go handleMessageEvent(ev)
 		}
 	}
+}
+
+func handleMessageEvent(ev *slack.MessageEvent) {
+	mu.Lock()
+	_, found := conversations[ev.Msg.User]
+	mu.Unlock()
+
+	var err error
+	possibleCommand := strings.TrimSpace(strings.ToLower(ev.Msg.Text))
+	if possibleCommand == startCommand && !found {
+		err = startConversation(ev.Msg.User)
+	} else if possibleCommand == endCommand && found {
+		err = endConversation(ev.Msg.User)
+	} else if found {
+		err = forwardMessage(ev.Msg.User, ev.Msg.Text)
+	}
+
+	if err != nil {
+		log.Error(err.Error())
+	}
+}
+
+func startConversation(msgUser string) error {
+	api.postMsg(msgUser, connMsg)
+
+	stranger, findErr := findRandomUser(msgUser)
+
+	if findErr == nil && len(stranger) > 0 {
+		mu.Lock()
+		conversations[msgUser] = stranger
+		conversations[stranger] = msgUser
+		mu.Unlock()
+
+		// Notify current user that we found Stranger
+		api.postMsg(msgUser, foundMsg)
+		// Notify Stranger
+		api.postMsg(stranger, strangerMsg)
+
+		log.Info("[startConversation] ok")
+		return nil
+	}
+
+	// Notify current user that we cannot find a Stranger
+	api.postMsg(msgUser, notFoundMsg)
+
+	return fmt.Errorf("[startConversation] stranger not found")
+}
+
+// user -> bot -> user. Secure
+func forwardMessage(msgUser string, text string) error {
+	mu.Lock()
+	stranger, found := conversations[msgUser]
+	mu.Unlock()
+
+	if found {
+		api.postMsg(stranger, text)
+		log.Info("[forwardMessage] ok")
+		return nil
+	}
+
+	return fmt.Errorf("[forwardMessage] unable to find stranger")
+}
+
+func endConversation(msgUser string) error {
+	mu.Lock()
+	stranger, found := conversations[msgUser]
+	mu.Unlock()
+
+	if found {
+		// Notify Initiator and Stranger that conversation is finished
+		api.postMsg(msgUser, byeMsg)
+		api.postMsg(stranger, byeStrangerMsg)
+
+		log.Info("[endConversation] ok")
+
+		mu.Lock()
+		delete(conversations, msgUser)
+		delete(conversations, stranger)
+		mu.Unlock()
+
+		return nil
+	}
+
+	return fmt.Errorf("[endConversation] unable to find stranger")
 }
 
 // Get all available users from Slack once
@@ -94,66 +166,6 @@ func getAvailableUsers(exclude string) ([]string, error) {
 	}
 
 	return users, nil
-}
-
-func startConversation(ev *slack.MessageEvent) {
-	api.postMsg(ev.Msg.User, connMsg)
-
-	stranger, findErr := findRandomUser(ev.Msg.User)
-
-	if findErr == nil && len(stranger) > 0 {
-		mu.Lock()
-		conversations[ev.Msg.User] = stranger
-		conversations[stranger] = ev.Msg.User
-		mu.Unlock()
-
-		// Notify current user that we found Stranger
-		api.postMsg(ev.Msg.User, foundMsg)
-		// Notify Stranger
-		api.postMsg(stranger, strangerMsg)
-
-		log.Info("[startConversation] ok")
-	} else {
-		// Notify current user that we cannot find a Stranger
-		api.postMsg(ev.Msg.User, notFoundMsg)
-
-		log.Info("[startConversation] stranger not found")
-	}
-}
-
-// user -> bot -> user. Secure
-func forwardMessage(ev *slack.MessageEvent) {
-	mu.Lock()
-	stranger, found := conversations[ev.Msg.User]
-	mu.Unlock()
-
-	if found {
-		api.postMsg(stranger, ev.Msg.Text)
-		log.Info("[forwardMessage] ok")
-	} else {
-		log.Info("[forwardMessage] unable to find stranger")
-	}
-}
-
-func endConversation(ev *slack.MessageEvent) {
-	mu.Lock()
-	stranger, found := conversations[ev.Msg.User]
-	mu.Unlock()
-
-	if found {
-		// Notify Initiator and Stranger that conversation is finished
-		api.postMsg(ev.Msg.User, byeMsg)
-		api.postMsg(stranger, byeStrangerMsg)
-
-		log.Info("[endConversation] ok")
-
-		mu.Lock()
-		delete(conversations, ev.Msg.User)
-		delete(conversations, stranger)
-		mu.Unlock()
-	} else {
-		log.Info("[endConversation] unable to find stranger")
-	}
 }
 
 func findRandomUser(initiator string) (string, error) {
