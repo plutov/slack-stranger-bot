@@ -32,51 +32,25 @@ func TestStartConversation(t *testing.T) {
 		t.Fatalf("2 active conversation expected, got %v", conversations)
 	}
 
-	endConversation("testuser")
-	endConversation("teststranger")
+	endConversation("testuser", "teststranger")
 }
 
 func TestEndConversation(t *testing.T) {
-	err := endConversation("testuser")
-	if err == nil {
-		t.Fatalf("Error expected")
-	}
-
 	startConversation("testuser")
-	err = endConversation("testuser")
-	if err != nil {
-		t.Fatalf("Failed to endConversation, got: %v", err)
-	}
+	endConversation("testuser", "teststranger")
 
-	startConversation("teststranger")
-	err = endConversation("testuser")
-	if err != nil {
-		t.Fatalf("Failed to endConversation, got: %v", err)
-	}
-
-	startConversation("testuser")
-	err = endConversation("inactive")
-	endConversation("testuser")
-	if err == nil {
-		t.Fatalf("Error expected")
+	if len(conversations) != 0 {
+		t.Fatalf("0 active conversation expected, got %v", conversations)
 	}
 }
 
 func TestForwardMessage(t *testing.T) {
 	startConversation("testuser")
-	err := forwardMessage("testuser", "msg1")
+	err := forwardMessage("testuser", "teststranger", "msg1")
 	if err != nil {
 		t.Fatalf("Failed to forwardMessage, got %v", err)
 	}
-	err = forwardMessage("teststranger", "msg2")
-	if err != nil {
-		t.Fatalf("Failed to forwardMessage, got %v", err)
-	}
-	err = forwardMessage("inactive", "msg3")
-	if err == nil {
-		t.Fatal("Error expected")
-	}
-	endConversation("testuser")
+	endConversation("testuser", "teststranger")
 }
 
 func TestGetAvailableUsers(t *testing.T) {

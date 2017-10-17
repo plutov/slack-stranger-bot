@@ -67,7 +67,7 @@ func startRTM() {
 
 func handleMessageEvent(ev *slack.MessageEvent) {
 	mu.Lock()
-	_, found := conversations[ev.Msg.User]
+	stranger, found := conversations[ev.Msg.User]
 	mu.Unlock()
 
 	var err error
@@ -75,9 +75,9 @@ func handleMessageEvent(ev *slack.MessageEvent) {
 	if possibleCommand == startCommand && !found {
 		err = startConversation(ev.Msg.User)
 	} else if possibleCommand == endCommand && found {
-		err = endConversation(ev.Msg.User)
+		err = endConversation(ev.Msg.User, stranger)
 	} else if found {
-		err = forwardMessage(ev.Msg.User, ev.Msg.Text)
+		err = forwardMessage(ev.Msg.User, stranger, ev.Msg.Text)
 	}
 
 	if err != nil {
@@ -108,45 +108,29 @@ func startConversation(msgUser string) error {
 	// Notify current user that we cannot find a Stranger
 	api.postMsg(msgUser, notFoundMsg)
 
-	return fmt.Errorf("[startConversation] stranger not found")
+	return fmt.Errorf("[startConversation] stranger not found, %v", findErr)
 }
 
 // user -> bot -> user. Secure
-func forwardMessage(msgUser string, text string) error {
-	mu.Lock()
-	stranger, found := conversations[msgUser]
-	mu.Unlock()
-
-	if found {
-		api.postMsg(stranger, text)
-		log.Info("[forwardMessage] ok")
-		return nil
-	}
-
-	return fmt.Errorf("[forwardMessage] unable to find stranger")
+func forwardMessage(msgUser string, stranger string, text string) error {
+	api.postMsg(stranger, text)
+	log.Info("[forwardMessage] ok")
+	return nil
 }
 
-func endConversation(msgUser string) error {
+func endConversation(msgUser string, stranger string) error {
+	// Notify Initiator and Stranger that conversation is finished
+	api.postMsg(msgUser, byeMsg)
+	api.postMsg(stranger, byeStrangerMsg)
+
 	mu.Lock()
-	stranger, found := conversations[msgUser]
+	delete(conversations, msgUser)
+	delete(conversations, stranger)
 	mu.Unlock()
 
-	if found {
-		// Notify Initiator and Stranger that conversation is finished
-		api.postMsg(msgUser, byeMsg)
-		api.postMsg(stranger, byeStrangerMsg)
+	log.Info("[endConversation] ok")
 
-		log.Info("[endConversation] ok")
-
-		mu.Lock()
-		delete(conversations, msgUser)
-		delete(conversations, stranger)
-		mu.Unlock()
-
-		return nil
-	}
-
-	return fmt.Errorf("[endConversation] unable to find stranger")
+	return nil
 }
 
 // Get all available users from Slack once
