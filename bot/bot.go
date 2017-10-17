@@ -55,8 +55,8 @@ func startRTM() {
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
-			// Do not handle bot messages
-			if len(ev.BotID) > 0 {
+			// Do not handle bot messages or messages from channels
+			if len(ev.BotID) > 0 || len(ev.Members) > 0 {
 				continue
 			}
 
