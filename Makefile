@@ -7,4 +7,4 @@ install: deps
 	go install
 
 deps:
-	glide install
+	dep ensure

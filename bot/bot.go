@@ -16,8 +16,10 @@ import (
 var (
 	// initiator => stranger map
 	conversations map[string]string
-	api           IAPI
-	mu            *sync.Mutex
+	// initiator => message map of chan
+	pipeline chan *slack.MessageEvent
+	api      IAPI
+	mu       *sync.Mutex
 )
 
 const (
@@ -35,6 +37,7 @@ const (
 func Start(a IAPI, logOut io.Writer) {
 	mu = &sync.Mutex{}
 	conversations = make(map[string]string)
+	pipeline = make(chan *slack.MessageEvent)
 
 	api = a
 
@@ -51,6 +54,12 @@ func startRTM() {
 	}
 
 	go rtm.ManageConnection()
+	go func() {
+		for {
+			ev := <-pipeline
+			handleMessageEvent(ev)
+		}
+	}()
 
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
@@ -60,7 +69,7 @@ func startRTM() {
 				continue
 			}
 
-			go handleMessageEvent(ev)
+			pipeline <- ev
 		}
 	}
 }

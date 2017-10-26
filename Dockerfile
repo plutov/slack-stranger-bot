@@ -7,8 +7,9 @@ ENV PKG_PATH /go/src/github.com/wizeline/slack-stranger-bot
 ADD . $PKG_PATH
 WORKDIR $PKG_PATH
 
-RUN curl https://glide.sh/get | sh
-RUN glide install
+# Install dependencies
+RUN go get github.com/golang/dep/cmd/dep
+RUN dep ensure
 RUN go install
 
 ENTRYPOINT ["/go/bin/slack-stranger-bot"]
