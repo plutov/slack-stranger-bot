@@ -8,5 +8,6 @@ import (
 
 func main() {
 	api := bot.NewAPISlack(os.Getenv("SLACK_TOKEN"))
-	bot.Start(api, os.Stdout)
+	b := bot.New(api)
+	b.Start(os.Stdout)
 }

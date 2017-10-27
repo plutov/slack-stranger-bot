@@ -13,14 +13,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
+// Bot type
+type Bot struct {
 	// initiator => stranger map
 	conversations map[string]string
 	// initiator => message map of chan
 	pipeline chan *slack.MessageEvent
 	api      IAPI
 	mu       *sync.Mutex
-)
+}
 
 const (
 	startCommand   = "hi"
@@ -33,22 +34,27 @@ const (
 	notFoundMsg    = "Sorry, cannot find available online Stranger right now :disappointed:"
 )
 
+// New inits new bot
+func New(api IAPI) *Bot {
+	b := new(Bot)
+	b.mu = &sync.Mutex{}
+	b.conversations = make(map[string]string)
+	b.pipeline = make(chan *slack.MessageEvent)
+	b.api = api
+
+	return b
+}
+
 // Start bot entry func
-func Start(a IAPI, logOut io.Writer) {
-	mu = &sync.Mutex{}
-	conversations = make(map[string]string)
-	pipeline = make(chan *slack.MessageEvent)
-
-	api = a
-
+func (b *Bot) Start(logOut io.Writer) {
 	log.SetOutput(logOut)
 	log.Info("[main] Stranger Bot started.")
 
-	startRTM()
+	b.startRTM()
 }
 
-func startRTM() {
-	rtm := api.newRTM()
+func (b *Bot) startRTM() {
+	rtm := b.api.newRTM()
 	if rtm == nil {
 		return
 	}
@@ -56,8 +62,8 @@ func startRTM() {
 	go rtm.ManageConnection()
 	go func() {
 		for {
-			ev := <-pipeline
-			handleMessageEvent(ev)
+			ev := <-b.pipeline
+			b.handleMessageEvent(ev)
 		}
 	}()
 
@@ -66,35 +72,35 @@ func startRTM() {
 		case *slack.MessageEvent:
 			// Do not handle bot messages
 			// Do not handle non-private messages
-			if ev == nil || len(ev.BotID) > 0 || !isPrivateMsg(ev) {
+			if ev == nil || len(ev.BotID) > 0 || !b.isPrivateMsg(ev) {
 				continue
 			}
 
-			pipeline <- ev
+			b.pipeline <- ev
 		}
 	}
 }
 
-func handleMessageEvent(ev *slack.MessageEvent) {
+func (b *Bot) handleMessageEvent(ev *slack.MessageEvent) {
 	// Send anonymous message to the channel
-	chanID, msg := getChannelIDAndMsgFromText(ev.Msg.Text)
+	chanID, msg := b.getChannelIDAndMsgFromText(ev.Msg.Text)
 	if len(chanID) > 0 && len(msg) > 0 {
-		api.postMsg(chanID, msg)
+		b.api.postMsg(chanID, msg)
 		return
 	}
 
-	mu.Lock()
-	stranger, found := conversations[ev.Msg.User]
-	mu.Unlock()
+	b.mu.Lock()
+	stranger, found := b.conversations[ev.Msg.User]
+	b.mu.Unlock()
 
 	var err error
 	possibleCommand := strings.TrimSpace(strings.ToLower(ev.Msg.Text))
 	if possibleCommand == startCommand && !found {
-		err = startConversation(ev.Msg.User)
+		err = b.startConversation(ev.Msg.User)
 	} else if possibleCommand == endCommand && found {
-		err = endConversation(ev.Msg.User, stranger)
+		err = b.endConversation(ev.Msg.User, stranger)
 	} else if found {
-		err = forwardMessage(ev.Msg.User, stranger, ev.Msg.Text)
+		err = b.forwardMessage(ev.Msg.User, stranger, ev.Msg.Text)
 	}
 
 	if err != nil {
@@ -102,11 +108,11 @@ func handleMessageEvent(ev *slack.MessageEvent) {
 	}
 }
 
-func isPrivateMsg(ev *slack.MessageEvent) bool {
+func (b *Bot) isPrivateMsg(ev *slack.MessageEvent) bool {
 	return string(ev.Channel[0]) == "D"
 }
 
-func getChannelIDAndMsgFromText(msg string) (string, string) {
+func (b *Bot) getChannelIDAndMsgFromText(msg string) (string, string) {
 	parts := strings.Split(msg, " ")
 	if len(parts) > 1 && strings.HasPrefix(parts[0], "<#") {
 		chanParts := strings.Split(parts[0], "|")
@@ -122,48 +128,48 @@ func getChannelIDAndMsgFromText(msg string) (string, string) {
 	return "", ""
 }
 
-func startConversation(msgUser string) error {
-	api.postMsg(msgUser, connMsg)
+func (b *Bot) startConversation(msgUser string) error {
+	b.api.postMsg(msgUser, connMsg)
 
-	stranger, findErr := findRandomUser(msgUser)
+	stranger, findErr := b.findRandomUser(msgUser)
 
 	if findErr == nil && len(stranger) > 0 {
-		mu.Lock()
-		conversations[msgUser] = stranger
-		conversations[stranger] = msgUser
-		mu.Unlock()
+		b.mu.Lock()
+		b.conversations[msgUser] = stranger
+		b.conversations[stranger] = msgUser
+		b.mu.Unlock()
 
 		// Notify current user that we found Stranger
-		api.postMsg(msgUser, foundMsg)
+		b.api.postMsg(msgUser, foundMsg)
 		// Notify Stranger
-		api.postMsg(stranger, strangerMsg)
+		b.api.postMsg(stranger, strangerMsg)
 
 		log.Info("[startConversation] ok")
 		return nil
 	}
 
 	// Notify current user that we cannot find a Stranger
-	api.postMsg(msgUser, notFoundMsg)
+	b.api.postMsg(msgUser, notFoundMsg)
 
 	return fmt.Errorf("[startConversation] stranger not found, %v", findErr)
 }
 
 // user -> bot -> user. Secure
-func forwardMessage(msgUser string, stranger string, text string) error {
-	api.postMsg(stranger, text)
+func (b *Bot) forwardMessage(msgUser string, stranger string, text string) error {
+	b.api.postMsg(stranger, text)
 	log.Info("[forwardMessage] ok")
 	return nil
 }
 
-func endConversation(msgUser string, stranger string) error {
+func (b *Bot) endConversation(msgUser string, stranger string) error {
 	// Notify Initiator and Stranger that conversation is finished
-	api.postMsg(msgUser, byeMsg)
-	api.postMsg(stranger, byeStrangerMsg)
+	b.api.postMsg(msgUser, byeMsg)
+	b.api.postMsg(stranger, byeStrangerMsg)
 
-	mu.Lock()
-	delete(conversations, msgUser)
-	delete(conversations, stranger)
-	mu.Unlock()
+	b.mu.Lock()
+	delete(b.conversations, msgUser)
+	delete(b.conversations, stranger)
+	b.mu.Unlock()
 
 	log.Info("[endConversation] ok")
 
@@ -171,16 +177,16 @@ func endConversation(msgUser string, stranger string) error {
 }
 
 // Get all available users from Slack once
-func getAvailableUsers(exclude string) ([]string, error) {
+func (b *Bot) getAvailableUsers(exclude string) ([]string, error) {
 	users := []string{}
 
-	slackUsers, err := api.getUsers()
+	slackUsers, err := b.api.getUsers()
 	if err != nil {
 		return users, fmt.Errorf("[getAvailableUsers] %v", err.Error())
 	}
 
 	for _, u := range slackUsers {
-		_, inConversation := conversations[u.ID]
+		_, inConversation := b.conversations[u.ID]
 		if !u.IsBot && !inConversation && u.Presence == "active" && u.ID != exclude {
 			users = append(users, u.ID)
 		}
@@ -189,8 +195,8 @@ func getAvailableUsers(exclude string) ([]string, error) {
 	return users, nil
 }
 
-func findRandomUser(initiator string) (string, error) {
-	availableUsers, err := getAvailableUsers(initiator)
+func (b *Bot) findRandomUser(initiator string) (string, error) {
+	availableUsers, err := b.getAvailableUsers(initiator)
 	if err != nil {
 		return "", err
 	}
@@ -198,11 +204,11 @@ func findRandomUser(initiator string) (string, error) {
 		return "", fmt.Errorf("[findRandomUser] no available users found")
 	}
 
-	randomUser := getRandomUser(availableUsers)
+	randomUser := b.getRandomUser(availableUsers)
 
 	return randomUser, nil
 }
 
-func getRandomUser(list []string) string {
+func (b *Bot) getRandomUser(list []string) string {
 	return list[rand.Intn(len(list))]
 }
