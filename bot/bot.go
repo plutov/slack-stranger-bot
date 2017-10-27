@@ -82,8 +82,10 @@ func (b *Bot) startRTM() {
 }
 
 func (b *Bot) handleMessageEvent(ev *slack.MessageEvent) {
+	text := sanitizeMsg(ev.Msg.Text)
+
 	// Send anonymous message to the channel
-	chanID, msg := b.getChannelIDAndMsgFromText(ev.Msg.Text)
+	chanID, msg := b.getChannelIDAndMsgFromText(text)
 	if len(chanID) > 0 && len(msg) > 0 {
 		b.api.postMsg(chanID, msg)
 		return
@@ -94,18 +96,24 @@ func (b *Bot) handleMessageEvent(ev *slack.MessageEvent) {
 	b.mu.Unlock()
 
 	var err error
-	possibleCommand := strings.TrimSpace(strings.ToLower(ev.Msg.Text))
+	possibleCommand := strings.ToLower(text)
 	if possibleCommand == startCommand && !found {
 		err = b.startConversation(ev.Msg.User)
 	} else if possibleCommand == endCommand && found {
 		err = b.endConversation(ev.Msg.User, stranger)
 	} else if found {
-		err = b.forwardMessage(ev.Msg.User, stranger, ev.Msg.Text)
+		err = b.forwardMessage(ev.Msg.User, stranger, text)
 	}
 
 	if err != nil {
 		log.Error(err.Error())
 	}
+}
+
+// Remove usernames, make trim
+func sanitizeMsg(msg string) string {
+	msg = strings.TrimSpace(msg)
+	return msg
 }
 
 func (b *Bot) isPrivateMsg(ev *slack.MessageEvent) bool {
