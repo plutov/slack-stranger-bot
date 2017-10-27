@@ -65,7 +65,8 @@ func startRTM() {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
 			// Do not handle bot messages
-			if len(ev.BotID) > 0 {
+			// Do not handle non-private messages
+			if len(ev.BotID) > 0 || !isPrivateMsg(ev) {
 				continue
 			}
 
@@ -92,6 +93,10 @@ func handleMessageEvent(ev *slack.MessageEvent) {
 	if err != nil {
 		log.Error(err.Error())
 	}
+}
+
+func isPrivateMsg(ev *slack.MessageEvent) bool {
+	return string(ev.Channel[0]) == "D"
 }
 
 func startConversation(msgUser string) error {
