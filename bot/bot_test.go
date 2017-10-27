@@ -118,4 +118,10 @@ func TestSanitizeMsg(t *testing.T) {
 	if clean != "hi my name is *** ***" {
 		t.Fatalf("wrong sanitized msg, got %s", clean)
 	}
+
+	original2 := "@alex"
+	clean2 := sanitizeMsg(original2)
+	if clean2 != "***" {
+		t.Fatalf("wrong sanitized msg, got %s", clean2)
+	}
 }
