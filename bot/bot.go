@@ -66,7 +66,7 @@ func startRTM() {
 		case *slack.MessageEvent:
 			// Do not handle bot messages
 			// Do not handle non-private messages
-			if len(ev.BotID) > 0 || !isPrivateMsg(ev) {
+			if ev == nil || len(ev.BotID) > 0 || !isPrivateMsg(ev) {
 				continue
 			}
 
@@ -76,6 +76,13 @@ func startRTM() {
 }
 
 func handleMessageEvent(ev *slack.MessageEvent) {
+	// Send anonymous message to the channel
+	chanID, msg := getChannelIDAndMsgFromText(ev.Msg.Text)
+	if len(chanID) > 0 && len(msg) > 0 {
+		api.postMsg(chanID, msg)
+		return
+	}
+
 	mu.Lock()
 	stranger, found := conversations[ev.Msg.User]
 	mu.Unlock()
@@ -97,6 +104,22 @@ func handleMessageEvent(ev *slack.MessageEvent) {
 
 func isPrivateMsg(ev *slack.MessageEvent) bool {
 	return string(ev.Channel[0]) == "D"
+}
+
+func getChannelIDAndMsgFromText(msg string) (string, string) {
+	parts := strings.Split(msg, " ")
+	if len(parts) > 1 && strings.HasPrefix(parts[0], "<#C") {
+		chanParts := strings.Split(parts[0], "|")
+
+		if len(chanParts) > 0 {
+			r := strings.NewReplacer("<#", "", "|", "")
+			chanID := r.Replace(chanParts[0])
+			parts := parts[1:]
+			return chanID, strings.Join(parts, " ")
+		}
+	}
+
+	return "", ""
 }
 
 func startConversation(msgUser string) error {

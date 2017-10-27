@@ -10,6 +10,12 @@ Meet strangers in your company, explore new people. Fully anonymous and secure, 
  - Bot will forward all next messages sent by user to Bot to the Stranger user. Without mentioning who sent this message.
  - Any user can type `bye` to finish the conversation, and type `hi` again to start a new random one.
 
+### Anonymous messages to the channel
+
+```
+You can send private message to the Bot started with channel name to send message to the channel.
+```
+
 ### Start Bot
 
  - Create App in Slack and copy `token`
