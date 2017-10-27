@@ -12,9 +12,10 @@ Meet strangers in your company, explore new people. Fully anonymous and secure, 
 
 ### Anonymous messages to the channel
 
-```
 You can send private message to the Bot started with channel name to send message to the channel.
-```
+
+ - Add bot to the channel.
+ - Send `#channel-name message` to the Bot in private conversation.
 
 ### Start Bot
 
