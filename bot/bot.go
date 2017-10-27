@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -113,6 +114,16 @@ func (b *Bot) handleMessageEvent(ev *slack.MessageEvent) {
 // Remove usernames, make trim
 func sanitizeMsg(msg string) string {
 	msg = strings.TrimSpace(msg)
+
+	// Replace usernames with ***
+	r, err := regexp.Compile(`@\S+`)
+	if err != nil {
+		log.Errorf("unable to create regexp: %v", err)
+		return msg
+	}
+
+	msg = r.ReplaceAllString(msg, "***")
+
 	return msg
 }
 

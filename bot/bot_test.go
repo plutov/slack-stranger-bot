@@ -111,3 +111,11 @@ func TestGetChannelAndMsgFromTextWithoutChannel(t *testing.T) {
 		t.Fatalf("Expected %s, got %s", "", msg)
 	}
 }
+
+func TestSanitizeMsg(t *testing.T) {
+	original := " hi my name is @alex.pliutau @alex.pliutau"
+	clean := sanitizeMsg(original)
+	if clean != "hi my name is *** ***" {
+		t.Fatalf("wrong sanitized msg, got %s", clean)
+	}
+}

@@ -2,6 +2,8 @@
 
 Meet strangers in your company, explore new people. Fully anonymous and secure, bot doesn't store any data.
 
+Bot removes all mentioned usernames from original message.
+
 ### How it works?
 
  - User opens conversation with Stranger Bot.
