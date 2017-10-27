@@ -83,8 +83,7 @@ func TestGetRandomUser(t *testing.T) {
 }
 
 func TestGetChannelAndMsgFromText(t *testing.T) {
-	msg := "<#C7KC1D50C|vn-bots> hi hello"
-	chanID, msg := getChannelIDAndMsgFromText(msg)
+	chanID, msg := getChannelIDAndMsgFromText("<#C7KC1D50C|vn-bots> hi hello")
 	if chanID != "C7KC1D50C" {
 		t.Fatalf("Expected %s, got %s", "C7KC1D50C", chanID)
 	}
@@ -92,12 +91,19 @@ func TestGetChannelAndMsgFromText(t *testing.T) {
 		t.Fatalf("Expected %s, got %s", "hi hello", msg)
 	}
 
-	msg2 := "hi hello"
-	chanID2, msg2 := getChannelIDAndMsgFromText(msg2)
+	chanID2, msg2 := getChannelIDAndMsgFromText("hi hello")
 	if chanID2 != "" {
 		t.Fatalf("Expected %s, got %s", "", chanID2)
 	}
 	if msg2 != "" {
 		t.Fatalf("Expected %s, got %s", "", msg2)
+	}
+
+	chanID3, msg3 := getChannelIDAndMsgFromText("<#G7KC1D50C|vn-bots> hi hello")
+	if chanID3 != "G7KC1D50C" {
+		t.Fatalf("Expected %s, got %s", "G7KC1D50C", chanID3)
+	}
+	if msg3 != "hi hello" {
+		t.Fatalf("Expected %s, got %s", "hi hello", msg3)
 	}
 }

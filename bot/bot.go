@@ -108,7 +108,7 @@ func isPrivateMsg(ev *slack.MessageEvent) bool {
 
 func getChannelIDAndMsgFromText(msg string) (string, string) {
 	parts := strings.Split(msg, " ")
-	if len(parts) > 1 && strings.HasPrefix(parts[0], "<#C") {
+	if len(parts) > 1 && strings.HasPrefix(parts[0], "<#") {
 		chanParts := strings.Split(parts[0], "|")
 
 		if len(chanParts) > 0 {
