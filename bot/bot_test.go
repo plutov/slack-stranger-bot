@@ -12,6 +12,12 @@ func init() {
 	Start(a, ioutil.Discard)
 }
 
+func BenchmarkGetChannelAndMsgFromText(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		getChannelIDAndMsgFromText("<#C7KC1D50C|vn-bots> <#C7KC1D50C|vn-bots> hi hello")
+	}
+}
+
 func TestStartConversation(t *testing.T) {
 	err := startConversation("testuser")
 	if err != nil {
