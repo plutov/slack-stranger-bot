@@ -18,7 +18,7 @@ import (
 type Bot struct {
 	// initiator => stranger map
 	conversations map[string]string
-	// initiator => message map of chan
+	// channel for all incoming messages, handled in startRTM
 	pipeline chan *slack.MessageEvent
 	api      IAPI
 	mu       *sync.Mutex
@@ -61,6 +61,7 @@ func (b *Bot) startRTM() {
 	}
 
 	go rtm.ManageConnection()
+
 	go func() {
 		for {
 			ev := <-b.pipeline
@@ -83,9 +84,9 @@ func (b *Bot) startRTM() {
 }
 
 func (b *Bot) handleMessageEvent(ev *slack.MessageEvent) {
-	text := sanitizeMsg(ev.Msg.Text)
+	text := b.sanitizeMsg(ev.Msg.Text)
 
-	// Send anonymous message to the channel
+	// Send anonymous message to the channel if message starts with channel name
 	chanID, msg := b.getChannelIDAndMsgFromText(text)
 	if len(chanID) > 0 && len(msg) > 0 {
 		b.api.postMsg(chanID, msg)
@@ -112,10 +113,10 @@ func (b *Bot) handleMessageEvent(ev *slack.MessageEvent) {
 }
 
 // Remove usernames, make trim
-func sanitizeMsg(msg string) string {
+func (b *Bot) sanitizeMsg(msg string) string {
 	msg = strings.TrimSpace(msg)
 
-	// Replace usernames with ***
+	// Replace all usernames with ***
 	r, err := regexp.Compile(`@\S+`)
 	if err != nil {
 		log.Errorf("unable to create regexp: %v", err)
@@ -127,10 +128,12 @@ func sanitizeMsg(msg string) string {
 	return msg
 }
 
+//
 func (b *Bot) isPrivateMsg(ev *slack.MessageEvent) bool {
-	return string(ev.Channel[0]) == "D"
+	return len(ev.Channel) > 0 && string(ev.Channel[0]) == "D"
 }
 
+// Parse message text and get channel name from the beginning of the text
 func (b *Bot) getChannelIDAndMsgFromText(msg string) (string, string) {
 	parts := strings.Split(msg, " ")
 	if len(parts) > 1 && strings.HasPrefix(parts[0], "<#") {
@@ -139,8 +142,9 @@ func (b *Bot) getChannelIDAndMsgFromText(msg string) (string, string) {
 		if len(chanParts) > 0 {
 			r := strings.NewReplacer("<#", "", "|", "")
 			chanID := r.Replace(chanParts[0])
-			parts := parts[1:]
-			return chanID, strings.Join(parts, " ")
+
+			// Second return val is the message without channel name
+			return chanID, strings.Join(parts[1:], " ")
 		}
 	}
 

@@ -56,12 +56,6 @@ func init() {
 	bot.Start(ioutil.Discard)
 }
 
-func BenchmarkGetChannelAndMsgFromText(b *testing.B) {
-	for n := 0; n < b.N; n++ {
-		bot.getChannelIDAndMsgFromText("<#C7KC1D50C|vn-bots> <#C7KC1D50C|vn-bots> hi hello")
-	}
-}
-
 func TestStartConversation(t *testing.T) {
 	err := bot.startConversation("testuser")
 	if err != nil {
@@ -154,14 +148,26 @@ func TestGetChannelAndMsgFromTextWithoutChannel(t *testing.T) {
 
 func TestSanitizeMsg(t *testing.T) {
 	original := " hi my name is @alex.pliutau @alex.pliutau"
-	clean := sanitizeMsg(original)
+	clean := bot.sanitizeMsg(original)
 	if clean != "hi my name is *** ***" {
 		t.Fatalf("wrong sanitized msg, got %s", clean)
 	}
 
 	original2 := "@alex"
-	clean2 := sanitizeMsg(original2)
+	clean2 := bot.sanitizeMsg(original2)
 	if clean2 != "***" {
 		t.Fatalf("wrong sanitized msg, got %s", clean2)
+	}
+}
+
+func BenchmarkGetChannelAndMsgFromText(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		bot.getChannelIDAndMsgFromText("<#C7KC1D50C|vn-bots> <#C7KC1D50C|vn-bots> hi hello")
+	}
+}
+
+func BenchmarkSanitizeMsg(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		bot.sanitizeMsg(" hi my name is @alex.pliutau @alex.pliutau ")
 	}
 }
