@@ -1,7 +1,7 @@
 all: install
 
 test: deps
-	go test ./... -bench=. -v
+	go test ./... -bench=. -v -race
 
 install: deps
 	go install

@@ -5,11 +5,51 @@ package bot
 import (
 	"io/ioutil"
 	"testing"
+
+	"github.com/nlopes/slack"
 )
 
 var (
 	bot *Bot
 )
+
+// APIMock struct
+type APIMock struct{}
+
+// NewAPIMock contructor
+func NewAPIMock() *APIMock {
+	return new(APIMock)
+}
+
+func (a *APIMock) newRTM() *slack.RTM {
+	return nil
+}
+
+func (a *APIMock) getUsers() ([]slack.User, error) {
+	return []slack.User{
+		slack.User{
+			ID:       "testuser",
+			Presence: "active",
+		},
+		slack.User{
+			ID:       "teststranger",
+			Presence: "active",
+		},
+		slack.User{
+			ID:       "inactive",
+			Presence: "inactive",
+		},
+		slack.User{
+			ID:       "bot",
+			Presence: "active",
+			IsBot:    true,
+		},
+	}, nil
+}
+
+func (a *APIMock) postMsg(channel, text string) error {
+	return nil
+}
 
 func init() {
 	bot = New(NewAPIMock())

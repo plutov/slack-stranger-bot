@@ -12,9 +12,6 @@ type APISlack struct {
 	api *slack.Client
 }
 
-// APIMock struct
-type APIMock struct{}
-
 // IAPI interface: slack or mock
 type IAPI interface {
 	newRTM() *slack.RTM
@@ -27,11 +24,6 @@ func NewAPISlack(token string) *APISlack {
 	a := new(APISlack)
 	a.api = slack.New(token)
 	return a
-}
-
-// NewAPIMock contructor
-func NewAPIMock() *APIMock {
-	return new(APIMock)
 }
 
 func (a *APISlack) newRTM() *slack.RTM {
@@ -51,34 +43,4 @@ func (a *APISlack) postMsg(channel, text string) error {
 	}
 
 	return msgErr
-}
-
-func (a *APIMock) newRTM() *slack.RTM {
-	return nil
-}
-
-func (a *APIMock) getUsers() ([]slack.User, error) {
-	return []slack.User{
-		slack.User{
-			ID:       "testuser",
-			Presence: "active",
-		},
-		slack.User{
-			ID:       "teststranger",
-			Presence: "active",
-		},
-		slack.User{
-			ID:       "inactive",
-			Presence: "inactive",
-		},
-		slack.User{
-			ID:       "bot",
-			Presence: "active",
-			IsBot:    true,
-		},
-	}, nil
-}
-
-func (a *APIMock) postMsg(channel, text string) error {
-	return nil
 }
