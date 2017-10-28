@@ -53,6 +53,7 @@ func (a *APIMock) postMsg(channel, text string) error {
 
 func init() {
 	bot = New(NewAPIMock())
+	// Do not log from application during tests execution
 	bot.Start(ioutil.Discard)
 }
 
@@ -127,36 +128,32 @@ func TestGetRandomUser(t *testing.T) {
 }
 
 func TestGetChannelAndMsgFromText(t *testing.T) {
-	chanID, msg := bot.getChannelIDAndMsgFromText("<#C7KC1D50C|vn-bots> hi hello")
-	if chanID != "C7KC1D50C" {
-		t.Fatalf("Expected %s, got %s", "C7KC1D50C", chanID)
+	cases := map[string][]string{
+		"<#C7KC1D50C|vn-bots> hi hello": []string{"C7KC1D50C", "hi hello"},
+		"<#G7KC1D50C|vn-real> hi hello": []string{"G7KC1D50C", "hi hello"},
+		"#vn-bots hi hello":             []string{"", ""},
 	}
-	if msg != "hi hello" {
-		t.Fatalf("Expected %s, got %s", "hi hello", msg)
-	}
-}
 
-func TestGetChannelAndMsgFromTextWithoutChannel(t *testing.T) {
-	chanID, msg := bot.getChannelIDAndMsgFromText("hi hello")
-	if chanID != "" {
-		t.Fatalf("Expected %s, got %s", "", chanID)
-	}
-	if msg != "" {
-		t.Fatalf("Expected %s, got %s", "", msg)
+	for text, expected := range cases {
+		chanID, msg := bot.getChannelIDAndMsgFromText(text)
+		if chanID != expected[0] || msg != expected[1] {
+			t.Fatalf("Expected %s %s, got %s %s", expected[0], expected[1], chanID, msg)
+		}
 	}
 }
 
 func TestSanitizeMsg(t *testing.T) {
-	original := " hi my name is @alex.pliutau @alex.pliutau"
-	clean := bot.sanitizeMsg(original)
-	if clean != "hi my name is *** ***" {
-		t.Fatalf("wrong sanitized msg, got %s", clean)
+	cases := map[string]string{
+		" hi my name is @alex.pliutau @alex.pliutau": "hi my name is *** ***",
+		"@alex":         "***",
+		"@alex@alex hi": "*** hi",
 	}
 
-	original2 := "@alex"
-	clean2 := bot.sanitizeMsg(original2)
-	if clean2 != "***" {
-		t.Fatalf("wrong sanitized msg, got %s", clean2)
+	for msg, expected := range cases {
+		clean := bot.sanitizeMsg(msg)
+		if clean != expected {
+			t.Fatalf("wrong sanitized msg, got %s, expected %s", clean, expected)
+		}
 	}
 }
 
