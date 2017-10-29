@@ -12,13 +12,12 @@ Bot removes all mentioned usernames from original message.
  - Bot will forward all next messages sent by user to Bot to the Stranger user. Without mentioning who sent this message.
  - Any user can type `bye` to finish the conversation, and type `hi` again to start a new random one.
 
-### Anonymous messages to specific channel/user
+### Anonymous messages to the channel
 
-You can send private message to the Bot started with channel name to send message to the channel/user.
+You can send private message to the Bot started with channel name to send message to the channel.
 
  - Add bot to the channel.
- - Send `#channelname message` to the Bot in private conversation.
- - Send `@username message` to the Bot in private conversation.
+ - Send `#channel-name message` to the Bot in private conversation.
 
 ### Start Bot
 
