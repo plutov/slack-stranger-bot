@@ -84,14 +84,10 @@ func (b *Bot) startRTM() {
 }
 
 func (b *Bot) handleMessageEvent(ev *slack.MessageEvent) {
-	text := ev.Msg.Text
+	text := b.sanitizeMsg(ev.Msg.Text)
 
 	// Send anonymous message to the channel if message starts with channel name
 	chanID, msg := b.getChannelIDAndMsgFromText(text)
-
-	// Sanitize after getChannelIDAndMsgFromText
-	text = b.sanitizeMsg(text)
-
 	if len(chanID) > 0 && len(msg) > 0 {
 		b.api.postMsg(chanID, msg)
 		return
@@ -140,13 +136,11 @@ func (b *Bot) isPrivateMsg(ev *slack.MessageEvent) bool {
 // Parse message text and get channel name from the beginning of the text
 func (b *Bot) getChannelIDAndMsgFromText(msg string) (string, string) {
 	parts := strings.Split(msg, " ")
-	startsWithChannel := strings.HasPrefix(parts[0], "<#") || strings.HasPrefix(parts[0], "<@")
-
-	if len(parts) > 1 && startsWithChannel {
+	if len(parts) > 1 && strings.HasPrefix(parts[0], "<#") {
 		chanParts := strings.Split(parts[0], "|")
 
 		if len(chanParts) > 0 {
-			r := strings.NewReplacer("<#", "", "<@", "", "|", "", ">", "")
+			r := strings.NewReplacer("<#", "", "|", "")
 			chanID := r.Replace(chanParts[0])
 
 			// Second return val is the message without channel name

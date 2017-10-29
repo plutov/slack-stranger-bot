@@ -132,8 +132,6 @@ func TestGetChannelAndMsgFromText(t *testing.T) {
 		"<#C7KC1D50C|vn-bots> hi hello": []string{"C7KC1D50C", "hi hello"},
 		"<#G7KC1D50C|vn-real> hi hello": []string{"G7KC1D50C", "hi hello"},
 		"#vn-bots hi hello":             []string{"", ""},
-		"@alex hi hello":                []string{"", ""},
-		"<@U123> hi hello":              []string{"U123", "hi hello"},
 	}
 
 	for text, expected := range cases {
