@@ -144,9 +144,7 @@ func TestGetChannelAndMsgFromText(t *testing.T) {
 
 func TestSanitizeMsg(t *testing.T) {
 	cases := map[string]string{
-		" hi my name is @alex.pliutau @alex.pliutau": "hi my name is *** ***",
-		"@alex":         "***",
-		"@alex@alex hi": "*** hi",
+		" hi my name is Alex": "hi my name is Alex",
 	}
 
 	for msg, expected := range cases {
