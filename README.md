@@ -21,7 +21,8 @@ You can send private message to the Bot started with channel name to send messag
 
  - Create App in Slack and copy `token`
  - Install [Docker](https://docs.docker.com/engine/installation/)
- - Run `docker build -t stranger . && docker run stranger -e SLACK_TOKEN=<token>` with valid token
+ - Build Bot `docker build -t stranger .`
+ - Run Bot `docker run stranger -e SLACK_TOKEN=<token>` with valid token
 
 ### Run Unit Tests
 
