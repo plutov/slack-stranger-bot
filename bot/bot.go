@@ -56,6 +56,7 @@ func (b *Bot) Start(logOut io.Writer) {
 func (b *Bot) startRTM() {
 	rtm := b.api.newRTM()
 	if rtm == nil {
+		log.Error("rtm object is nil")
 		return
 	}
 
@@ -118,7 +119,6 @@ func (b *Bot) sanitizeMsg(msg string) string {
 	return msg
 }
 
-//
 func (b *Bot) isPrivateMsg(ev *slack.MessageEvent) bool {
 	return len(ev.Channel) > 0 && string(ev.Channel[0]) == "D"
 }
