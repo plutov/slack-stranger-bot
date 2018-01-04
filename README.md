@@ -23,6 +23,7 @@ You can send private message to the Bot started with channel name to send messag
  - Install [Docker](https://docs.docker.com/engine/installation/)
  - Build Bot `docker build -t stranger .`
  - Run Bot `docker run stranger -e SLACK_TOKEN=<token>`
+ - If you don't want to build it run `docker run pltvs/stranger -e SLACK_TOKEN=<token>`
 
 ### Run Unit Tests
 
