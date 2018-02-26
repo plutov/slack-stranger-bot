@@ -2,10 +2,16 @@
 
 
 [[projects]]
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  revision = "ea4d1f681babbce9545c9c5f3d5194a789c89f5b"
+  version = "v1.2.0"
+
+[[projects]]
   name = "github.com/nlopes/slack"
   packages = ["."]
-  revision = "c86337c0ef2486a15edd804355d9c73d2f2caed1"
-  version = "v0.1.0"
+  revision = "8ab4d0b364ef1e9af5d102531da20d5ec902b6c4"
+  version = "v0.2.0"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -19,18 +25,16 @@
   revision = "9419663f5a44be8b34ca85f08abc5fe1be11f8a3"
 
 [[projects]]
-  name = "golang.org/x/net"
-  packages = ["websocket"]
-  revision = "a04bdaca5b32abe1c069418fb7088ae607de5bd0"
-
-[[projects]]
   name = "golang.org/x/sys"
-  packages = ["unix","windows"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "c4489faa6e5ab84c0ef40d6ee878f7a030281f0f"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3fe38a04eaf337f6a4a85b7c5754962d3d547bdde6f68b34cda5e782deeeaf0a"
+  inputs-digest = "391723bfb33c7134aaf08b99f8b5e50bc165273c98cdd9023b2d87179b13c071"
   solver-name = "gps-cdcl"
   solver-version = 1
