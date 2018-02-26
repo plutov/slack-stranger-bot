@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Alex Pliutau, Wizeline
+// Copyright (c) 2018 Alex Pliutau, Wizeline
 
 package bot
 
