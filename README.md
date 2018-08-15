@@ -1,4 +1,4 @@
-### Slack Stranger Bot [![Build Status](https://travis-ci.org/wizeline/slack-stranger-bot.svg?branch=master)](https://travis-ci.org/wizeline/slack-stranger-bot)
+### Slack Stranger Bot [![Build Status](https://travis-ci.org/plutov/slack-stranger-bot.svg?branch=master)](https://travis-ci.org/plutov/slack-stranger-bot)
 
 Meet strangers in your company, explore new people. Fully anonymous and secure, bot doesn't store any data.
 

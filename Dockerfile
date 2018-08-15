@@ -3,8 +3,8 @@
 # build
 FROM golang:alpine as builder
 RUN apk add --no-cache git
-ADD . /go/src/github.com/wizeline/slack-stranger-bot
-WORKDIR /go/src/github.com/wizeline/slack-stranger-bot
+ADD . /go/src/github.com/plutov/slack-stranger-bot
+WORKDIR /go/src/github.com/plutov/slack-stranger-bot
 RUN go get github.com/golang/dep/cmd/dep
 RUN dep ensure
 RUN go install

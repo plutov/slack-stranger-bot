@@ -1,11 +1,11 @@
-// Copyright (c) 2018 Alex Pliutau, Wizeline
+// Copyright (c) 2018 Alex Pliutau
 
 package main
 
 import (
 	"os"
 
-	"github.com/wizeline/slack-stranger-bot/bot"
+	"github.com/plutov/slack-stranger-bot/bot"
 )
 
 func main() {
