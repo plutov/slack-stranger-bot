@@ -2,12 +2,10 @@
 
 # build
 FROM golang:alpine as builder
-RUN apk add --no-cache git
+RUN apk add --no-cache git gcc
 ADD . /go/src/github.com/plutov/slack-stranger-bot
 WORKDIR /go/src/github.com/plutov/slack-stranger-bot
-RUN go get github.com/golang/dep/cmd/dep
-RUN dep ensure
-RUN go install
+RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go install
 
 # binary only
 FROM alpine:latest
