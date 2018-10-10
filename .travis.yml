@@ -5,8 +5,5 @@ go:
   - 1.10
   - 1.11
 
-install:
-  - go get -t ./...
-
 script:
-  - go test ./bot -bench=. -v
+  - GO111MODULE=on go test ./bot -bench=. -v
