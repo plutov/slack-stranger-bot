@@ -1,7 +1,0 @@
-language: go
-
-go:
-  - 1.11
-
-script:
-  - GO111MODULE=on go test ./bot -bench=. -v

@@ -1,5 +1,3 @@
-// Copyright (c) 2018 Alex Pliutau
-
 package bot
 
 import (

@@ -1,13 +1,13 @@
 ### Slack Stranger Bot
 
-Meet strangers in your company, explore new people. Fully anonymous and secure, bot doesn't store any data.
+Meet strangers in your Slack Workspace, explore new people. Fully anonymous and secure, bot doesn't store any data.
 
 ### How it works?
 
- - User opens conversation with Stranger Bot.
+ - User opens a conversation with Stranger Bot.
  - Types `hi`.
- - Stranger Bot finds random active user who doesn't participate currently in Stranger conversation.
- - Bot will forward all next messages sent by the user to Stranger Bot to the user. Without mentioning who sent this message.
+ - Stranger Bot finds random active user who doesn't participate currently in another Stranger conversation.
+ - Bot will act as a proxy between two connected users. Never mentioning who sends a message.
  - Any user can type `bye` to finish the conversation, and type `hi` again to start a new random one.
 
 ### Anonymous messages to the channel
@@ -17,15 +17,20 @@ You can send private message to the Stranger Bot started with channel name to se
  - Add Stranger Bot to the channel.
  - Send `#channel-name message` to the Bot in private conversation.
 
-### Run Stranger
+### Run Stranger Bot
 
- - Create Slack App and get API token
- - Install [Docker](https://docs.docker.com/engine/installation/)
- - Build Bot `docker build -t stranger .`
- - Run Bot `docker run stranger -e SLACK_TOKEN=<token>`
+1. [Create an app](https://api.slack.com/apps/) in Slack
+2. Add `chat:write` OAuth scope
+3. Install in your Workspace
+4. Retrieve `Bot User OAuth Token`
+
+```bash
+docker build -t slack-stranger-bot .
+docker run slack-stranger-bot -e SLACK_TOKEN=<token>
+```
 
 ### Run Unit Tests
 
 ```
-make test
+go test -v ./...
 ```
