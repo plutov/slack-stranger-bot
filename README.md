@@ -21,8 +21,9 @@ You can send private message to the Stranger Bot started with channel name to se
 
 1. [Create an app](https://api.slack.com/apps/) in Slack
 2. Add `chat:write` OAuth scope
-3. Install in your Workspace
-4. Retrieve `Bot User OAuth Token`
+3. Toggle `Allow users to send Slash commands and messages from the messages tab`
+4. Install in your Workspace
+5. Retrieve `Bot User OAuth Token`
 
 ```bash
 docker build -t slack-stranger-bot .
