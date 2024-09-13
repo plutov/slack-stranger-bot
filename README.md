@@ -34,3 +34,37 @@ docker run slack-stranger-bot -e SLACK_TOKEN=<token>
 ```
 go test -v ./...
 ```
+
+### Coversation example
+
+```bash
+> **alex.pliutau** [10:29 PM]
+>
+> hi
+>
+> **Stranger Bot** [10:29 PM]
+>
+> Connecting to a random Stranger ...
+>
+> Stranger found! Say hello, and please be polite. Type "bye" to finish the conversation
+>
+> hola!!
+>
+> **alex.pliutau** [10:31 PM]
+>
+> Nice, super private. How are you?
+>
+> **Stranger Bot** [10:31 PM]
+>
+> wat
+>
+> hahaha
+>
+> **alex.pliutau** [10:31 PM]
+>
+> bye
+>
+> **Stranger Bot** [10:31 PM]
+>
+> Bye! You finished conversation with the Stranger. Type hi again if you want to start a new random one.
+```
